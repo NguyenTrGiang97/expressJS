@@ -1,0 +1,42 @@
+var md5 = require('md5');
+var db = require('../db');
+
+
+module.exports.login = function (request, response) {
+    response.render('auth/login.pug');
+};
+
+
+module.exports.postLogin = function (req, res) {
+    var email = req.body.email;
+    var password = req.body.password;
+    var user = db.get('users').find({ email: email }).value();
+
+    if (!user) {
+        res.render('auth/login.pug', {
+            errors: [
+                'User does not exists',
+            ],
+            values: req.body 
+        });
+        return;
+    }
+
+    var hashedPassword = md5(password);
+
+    if (user.password !== hashedPassword) {
+        res.render('auth/login.pug', {
+            errors: [
+                'Wrong passwordd'
+            ],
+            values: req.body
+        });
+        return;
+    }
+
+    res.cookie('userId', user.id, {
+        signed: true
+    });
+    res.redirect('/users');
+
+};
